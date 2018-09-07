@@ -1,15 +1,20 @@
 'use strict';
 
-var gulp = require('gulp');
-var zip = require('gulp-zip');
+const fs = require('file-system');
+const gulp = require('gulp');
+const zip = require('gulp-zip');
 
-var outPath = "out/";
+const outPath = "out/";
 
-var buildPath = "src/*";
-var outName = 'myextension.crx';
+const buildPath = "src/**";
+const assetPath = "assets/**";
+const manifest = "manifest.json";
+
+const date = (new Date()).toLocaleString().replace(/([/])/g, "-");
+const outName = "FocusOverview_upload-"+date+".zip";
 
 gulp.task('build', function () {
-    gulp.src(buildPath)
+    return gulp.src([buildPath, assetPath, manifest], {base: '.'})
         .pipe(zip(outName))
         .pipe(gulp.dest(outPath));
 });

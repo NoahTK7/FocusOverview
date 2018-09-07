@@ -14,6 +14,9 @@ chrome.extension.sendMessage({}, function (response) {
     }, 10);
 });
 
+const links = [];
+let classes, gradeTemplate;
+
 function init() {
     jQuery.ajax({
         url: chrome.extension.getURL('assets/templates/grade-template.html'),
@@ -22,27 +25,41 @@ function init() {
         },
         async: false
     });
+    //document.getElementById("updateButton").addEventListener("click", update(true));
+    $("#updateButton").click(function () {
+        console.log("button clicked.");
+        update(true);
+    });
 
-    const gradeTemplate = $("#gradeTemplate");
-
+    gradeTemplate = $("#gradeTemplate");
 
     let assignmentButton = $(".site-menu-group").filter($("[data-index='3']")).children("button");
     assignmentButton.click();
+    $(".site-content").click();
 
-    const classes = $("div.site-menu-dropdown").find(".site-menu-items").children();
+    classes = $("div.site-menu-dropdown").find(".site-menu-items").children();
     console.log(classes);
 
-    const links = [];
     classes.each(function (index, value) {
         links.push($(value).attr("href"));
     });
     console.log(links);
 
+    update(false);
+}
 
+function update(force) {
     chrome.storage.local.get(['lastUpdate'], function (result) {
-        console.log(result.lastUpdate);
-        console.log(new Date().getTime() - new Date(result.lastUpdate).getTime());
-        let useCache = new Date().getTime() - new Date(result.lastUpdate).getTime() < 1 * 60000;
+        let useCache;
+
+        if (force) {
+            //remove current elements
+            $(".gradeRow").remove();
+        } else { //false -> reg logic
+            console.log(result.lastUpdate);
+            console.log(new Date().getTime() - new Date(result.lastUpdate).getTime());
+            useCache = new Date().getTime() - new Date(result.lastUpdate).getTime() < 1 * 60000;
+        }
 
         links.forEach(function (item, index, array) {
             let className = $(classes[index]).attr("title").split(" - ")[0];
@@ -56,7 +73,7 @@ function init() {
             newGrade.attr("class", "gradeRow");
             $("#gradeOverviewTable tbody").append(newGrade);
 
-            if (!useCache) {
+            if (!useCache || force) {
                 console.log("ajax");
                 $.ajax({
                     url: item,
@@ -82,6 +99,6 @@ function init() {
                 });
             }
         });
-        if (!useCache) chrome.storage.local.set({"lastUpdate": new Date().toString()}); //window.localStorage.setItem("lastUpdate", new Date());
+        if (!useCache) chrome.storage.local.set({"lastUpdate": new Date().toString()});
     });
 }
